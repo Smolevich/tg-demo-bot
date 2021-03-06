@@ -1,0 +1,50 @@
+services:
+  bot:
+    image: tg-demo-bot:${VERSION}
+    restart: always
+    build:
+      context: .
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - migrate-up
+  db:
+    image: postgres
+    restart: always
+    ports:
+    - 5432:5432
+    volumes:
+    - "./data:/var/lib/postgresql/data"
+    environment:
+      - POSTGRES_PASSWORD=stats
+      - POSTGRES_USER=stats
+      - POSTGRES_DB=stats
+  migrate-up:
+    container_name: migrate-up
+    image: aybabtme/goose:latest
+    depends_on:
+      - db
+    volumes:
+      - "./migrations:/migrations"
+    command: [
+        "-dir",
+        "/migrations/",
+        "postgres",
+        "host=db user=stats dbname=stats password=stats sslmode=disable",
+        "up"
+    ]
+  migrate-down:
+    container_name: migrate-down
+    image: aybabtme/goose:latest
+    depends_on:
+      - db
+    volumes:
+      - "./migrations:/migrations"
+    command: [
+        "-dir",
+        "/migrations/",
+        "postgres",
+        "host=db user=stats dbname=stats password=stats sslmode=disable",
+        "down"
+    ]
