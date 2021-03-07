@@ -52,7 +52,7 @@ func main() {
 		if err != nil {
 			fmt.Println("Error", err)
 		}
-		log.Printf("Chat id %s, name %s, sender %s, text %s", m.Chat.ID, m.Chat.Title, m.Sender.Username, m.Text)
+		log.Printf("Chat id %d, name %s, sender %s, text %s", m.Chat.ID, m.Chat.Title, m.Sender.Username, m.Text)
 	})
 
 	b.Handle(tb.OnPhoto, func(m *tb.Message) {
