@@ -5,6 +5,8 @@ import (
 	tb "gopkg.in/tucnak/telebot.v2"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/smolevich/tg-demo-bot/storage"
@@ -13,14 +15,10 @@ import (
 func main() {
 	storage, err := storage.NewPgxStorage(os.Getenv("DB_DSN"), 10, 10, time.Duration(0))
 	if err != nil {
-		return
+		log.Fatal(err)
 	}
-	//conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
-	//if err != nil {
-	//	fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
-	//	os.Exit(1)
-	//}
-	//defer conn.Close(context.Background())
+	signalCh := make(chan os.Signal, 1)
+	signal.Notify(signalCh, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	b, err := tb.NewBot(tb.Settings{
 		URL:    "https://api.telegram.org",
@@ -37,7 +35,7 @@ func main() {
 
 	b.Handle("/hello", func(m *tb.Message) {
 		log.Println(m.Chat, m.Text, m.Sender.ID)
-		b.Send(m.Sender, "Hello World!")
+		b.Send(m.Chat, "Hello, "+m.Sender.Username)
 	})
 	b.Handle(tb.OnText, func(m *tb.Message) {
 		// all the text messages that weren't
@@ -70,4 +68,6 @@ func main() {
 	})
 
 	b.Start()
+	<-signalCh
+	fmt.Println("Stopping bot...")
 }
